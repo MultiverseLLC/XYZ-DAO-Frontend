@@ -17,11 +17,10 @@ jobs:
       id: slack
       env:
         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-      uses: voxmedia/github-action-slack-notify-build@v1
+      uses: slackapi/slack-github-action@v1.15.0
       with:
-        channel: infra-ci-kekdao
-        status: BUILD STARTED
-        color: warning
+        channel-id: q-xyz-cicd
+        slack-message: ":pepegalight: STARTED XYZ-DAO-Frontend Dev Checkout"
 
     - name: Setup Nodejs
       uses: actions/setup-node@v1
@@ -48,7 +47,7 @@ jobs:
         GENERATE_SOURCEMAP: false
         SKIP_PREFLIGHT_CHECK: true
         REACT_APP_ENV: 'development'
-        REACT_APP_HTML_TITLE: 'Universe Rinkeby'
+        REACT_APP_HTML_TITLE: 'Multiverse Rinkeby'
         REACT_APP_WEB3_CHAIN_ID: 4
         REACT_APP_WEB3_POLLING_INTERVAL: 12000
         REACT_APP_WEB3_RPC_WSS_URL: 'wss://rinkeby.infura.io/ws/v3/25763b5ba15644a8b3079d3ee755bce5'
@@ -56,8 +55,8 @@ jobs:
         REACT_APP_WEB3_PORTIS_APP_ID: '88597a67-b066-4b66-ad9b-e9262d8716f6'
         REACT_APP_WEB3_WALLET_CONNECT_BRIDGE: 'https://bridge.walletconnect.org'
         REACT_APP_WEB3_COINBASE_APP_NAME: 'universe.xyz'
-        REACT_APP_WEB3_TREZOR_EMAIL: 'cezar@universe.xyz'
-        REACT_APP_WEB3_TREZOR_APP_URL: 'https://universe.xyz/'
+        REACT_APP_WEB3_TREZOR_EMAIL: 'trevor@universe.xyz'
+        REACT_APP_WEB3_TREZOR_APP_URL: 'https://multiverse.pub/'
         REACT_APP_ETHERSCAN_API_KEY: '4RSJUUZQFMXUAUUJP5FI5UR5U59N7UIA32'
         REACT_APP_TOKEN_XYZ_ADDR: '0x41E88dc0dfA5455E64327484F1862332413520da'
         REACT_APP_TOKEN_USDC_ADDR: '0x1F719D2Ea53b9F7ee4dBFE51B0D91e892A05AA26'
@@ -83,7 +82,7 @@ jobs:
         REACT_APP_CONTRACT_DAO_REWARD_ADDR: '0x7edAdA68A7FF81452De0D9cCfe8E8305B17Aa563'
         REACT_APP_CONTRACT_MERKLE_DISTRIBUTOR_ADDR: '0x8D56D7438052D85A959B32E600f4674D79F81F15'
         REACT_APP_DAO_ACTIVATION_THRESHOLD: 50000000
-        REACT_APP_BASE_API_URL: 'https://dev.api.dao.universe.xyz'
+        REACT_APP_BASE_API_URL: 'https://api.dao.dev.multiverse.pub'
     - name: Save artifacts
       uses: actions/upload-artifact@v2
       with:
@@ -94,23 +93,19 @@ jobs:
       if: success()
       env:
         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-      uses: voxmedia/github-action-slack-notify-build@v1
+       uses: slackapi/slack-github-action@v1.15.0
       with:
-        message_id: ${{ steps.slack.outputs.message_id }}
-        channel: infra-ci-kekdao
-        status: BUILD SUCCESSFUL
-        color: good
+        channel-id: q-xyz-cicd
+        slack-message: ":white_check_mark: Completed XYZ-DAO-Frontend build"
 
     - name: Notify Slack failure
       if: failure()
       env:
         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-      uses: voxmedia/github-action-slack-notify-build@v1
+      uses: slackapi/slack-github-action@v1.15.0
       with:
-        message_id: ${{ steps.slack.outputs.message_id }}
-        channel: infra-ci-kekdao
-        status: BUILD FAILED
-        color: danger
+        channel-id: q-xyz-cicd
+        slack-message: ":octagonal_sign: Failed XYZ-DAO-Frontend build"
 
   deploy:
     needs: build
@@ -121,11 +116,10 @@ jobs:
       id: slack
       env:
         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-      uses: voxmedia/github-action-slack-notify-build@v1
+      uses: slackapi/slack-github-action@v1.15.0
       with:
-        channel: infra-ci-kekdao
-        status: DEPLOYMENT STARTED
-        color: warning
+        channel-id: q-xyz-cicd
+        slack-message: ":pepegalight: STARTED XYZ-DAO-Frontend Dev Deployment"
 
     - name: Get artifacts
       uses: actions/download-artifact@v2
@@ -140,14 +134,14 @@ jobs:
         aws-region: us-east-1
 
     - name: Deploy static site to S3
-      run: ls -l && aws s3 sync . s3://dev-devdaouniversexyz-origin --delete
+      run: ls -l && aws s3 sync . s3://dev-daodevmultiversepub-origin --delete
 
     - name: Invalidate CloudFront cache
       run: |
         #!/usr/bin/env bash
         set -eou pipefail
 
-        CF_DIST_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items!=null] | [?contains(Aliases.Items, 'dev.dao.universe.xyz')].Id | [0]" | tr -d \")
+        CF_DIST_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items!=null] | [?contains(Aliases.Items, 'dao.dev.multiverse.pub')].Id | [0]" | tr -d \")
         echo "Clearing cache for ${CF_DIST_ID}..."
         CF_INVALIDATION_ID=$(aws cloudfront create-invalidation --distribution-id ${CF_DIST_ID} --paths "/*" | jq -r '.Invalidation.Id')
         while [ $(aws cloudfront get-invalidation --distribution-id ${CF_DIST_ID} --id ${CF_INVALIDATION_ID} | jq -r '.Invalidation.Status') != "Completed" ]; do
@@ -159,20 +153,16 @@ jobs:
       if: success()
       env:
         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-      uses: voxmedia/github-action-slack-notify-build@v1
+      uses: slackapi/slack-github-action@v1.15.0
       with:
-        message_id: ${{ steps.slack.outputs.message_id }}
-        channel: infra-ci-kekdao
-        status: DEPLOYMENT SUCCESSFUL
-        color: good
+        channel-id: q-xyz-cicd
+        slack-message: ":white_check_mark: Completed XYZ-DAO-Frontend deployment"
 
     - name: Notify Slack failure
       if: failure()
       env:
         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-      uses: voxmedia/github-action-slack-notify-build@v1
+      uses: slackapi/slack-github-action@v1.15.0
       with:
-        message_id: ${{ steps.slack.outputs.message_id }}
-        channel: infra-ci-kekdao
-        status: DEPLOYMENT FAILED
-        color: danger
+        channel-id: q-xyz-cicd
+        slack-message: ":octagonal_sign: Failed XYZ-DAO-Frontend Deployment"
