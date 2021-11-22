@@ -93,7 +93,7 @@ jobs:
       if: success()
       env:
         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-       uses: slackapi/slack-github-action@v1.15.0
+      uses: slackapi/slack-github-action@v1.15.0
       with:
         channel-id: q-xyz-cicd
         slack-message: ":white_check_mark: Completed XYZ-DAO-Frontend build"
